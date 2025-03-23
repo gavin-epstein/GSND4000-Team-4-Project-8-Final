@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e66c6366d904e98bc83428217d4fd7, type: 3}
+  m_Name: PressSpaceForTurn
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":233.9684,"y":6.656968},"zoom":1.0,"elements":[{"coroutine":false,"defaultValues":{"key":{"$content":"Space","$type":"UnityEngine.KeyCode"},"action":{"$content":"Down","$type":"Unity.VisualScripting.PressState"}},"position":{"x":-265.0,"y":-100.0},"guid":"868d9ffe-3793-4d95-9b27-0da8abb9441a","$version":"A","$type":"Unity.VisualScripting.OnKeyboardInput","$id":"9"},{"argumentCount":0,"defaultValues":{"name":{"$content":"OnTurn","$type":"System.String"},"target":{"$content":0,"$type":"UnityEngine.Object"}},"position":{"x":-34.0,"y":-123.0},"guid":"61af7e5f-c070-4ab5-bc0d-e7a6259be597","$version":"A","$type":"Unity.VisualScripting.TriggerCustomEvent","$id":"11"},{"sourceUnit":{"$ref":"9"},"sourceKey":"trigger","destinationUnit":{"$ref":"11"},"destinationKey":"enter","guid":"1ba07f2a-8cde-4a44-9c0f-a88bbb0ce091","$type":"Unity.VisualScripting.ControlConnection"}],"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 7002564344375012763, guid: d91405fe5542ec648a95180304c246bd, type: 3}
