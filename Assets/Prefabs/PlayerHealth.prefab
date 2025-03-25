@@ -184,7 +184,7 @@ RectTransform:
   - {fileID: 8334949206201657897}
   - {fileID: 8800622744555105113}
   - {fileID: 7711105472235964314}
-  - {fileID: 2452245797655943550}
+  - {fileID: 4359336460372124689}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -285,7 +285,7 @@ MonoBehaviour:
   _data:
     _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
     _objectReferences:
-    - {fileID: 11400000, guid: c97e76185960a9241a47b6d25e5e8747, type: 2}
+    - {fileID: 11400000, guid: c714202040043214e94a20ca4325264c, type: 2}
 --- !u!1 &4470608163412774648
 GameObject:
   m_ObjectHideFlags: 0
@@ -322,7 +322,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &6081520760646337000
+--- !u!1 &4785154556253405220
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -330,50 +330,73 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2452245797655943550}
-  - component: {fileID: 870298495965321717}
-  - component: {fileID: 2269412549942872520}
+  - component: {fileID: 4359336460372124689}
+  - component: {fileID: 8296624564839213388}
+  - component: {fileID: 7060421626690670072}
+  - component: {fileID: 1465421718127968026}
   m_Layer: 0
-  m_Name: Image
+  m_Name: heart_0
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!224 &2452245797655943550
+--- !u!224 &4359336460372124689
 RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6081520760646337000}
+  m_GameObject: {fileID: 4785154556253405220}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.7424, y: 1.7424, z: 1.7424}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6895367337117005374}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -90.68, y: 0.0206}
+  m_AnchoredPosition: {x: -92.8, y: 0.020661}
   m_SizeDelta: {x: 20.0413, y: 20.0409}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &870298495965321717
+--- !u!95 &8296624564839213388
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4785154556253405220}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: ec4718161bc103540b58c9871d9b8258, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!222 &7060421626690670072
 CanvasRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6081520760646337000}
+  m_GameObject: {fileID: 4785154556253405220}
   m_CullTransparentMesh: 1
---- !u!114 &2269412549942872520
+--- !u!114 &1465421718127968026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6081520760646337000}
+  m_GameObject: {fileID: 4785154556253405220}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -387,7 +410,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 2357983816835882149, guid: 235aad7a50de9b041ba111b50fca91a1, type: 3}
+  m_Sprite: {fileID: -744727505, guid: 2dd722c5479e6fa4abbded1b6e87359e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
