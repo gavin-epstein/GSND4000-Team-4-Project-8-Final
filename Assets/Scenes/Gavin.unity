@@ -515,14 +515,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 916590260629201873, guid: 8de1c5f2b9cc22f4486f18a6d4d72727, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 916590260629201873, guid: 8de1c5f2b9cc22f4486f18a6d4d72727, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1876253563812799796, guid: 8de1c5f2b9cc22f4486f18a6d4d72727, type: 3}
       propertyPath: _data._json
       value: '{"declarations":{"Kind":"Object","collection":{"$content":[{"name":"GridPosition","value":{"x":0.0,"y":-1.0,"$type":"UnityEngine.Vector2"},"typeHandle":{"Identification":"UnityEngine.Vector2,
