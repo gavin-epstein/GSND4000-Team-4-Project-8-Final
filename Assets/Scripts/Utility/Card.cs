@@ -2,7 +2,7 @@ using UnityEngine;
 
 public enum Card
 {
-    Card1,
+    ExampleCard,
     Card2,
     Card3,
     Card4,
