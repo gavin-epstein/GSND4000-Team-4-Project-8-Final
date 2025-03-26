@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum CardHand
+public enum Card
 {
     Card1,
     Card2,
