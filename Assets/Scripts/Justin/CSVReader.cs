@@ -42,7 +42,7 @@ public class CSVReader : Unit
     public ControlOutput outputTrigger;
 
     [DoNotSerialize]
-    public ValueInput filePath;
+    public ValueInput csvFile;
 
     [DoNotSerialize]
     public ValueOutput bulletSpawnData;
@@ -55,26 +55,31 @@ public class CSVReader : Unit
             "ReadCSV",
             (flow) =>
             {
-                outputData = ReadCSV(flow.GetValue<string>(filePath));
+                outputData = ReadCSV(flow.GetValue<TextAsset>(csvFile));
                 return outputTrigger;
             }
         );
         outputTrigger = ControlOutput("Output");
 
-        filePath = ValueInput<string>("relativeFilePath", "Assets/Resources/Level1.csv");
+        csvFile = ValueInput<TextAsset>("csvTextAsset");
         bulletSpawnData = ValueOutput<List<BulletSpawnData>>(
             "bulletSpawnData",
             (flow) => outputData
         );
 
-        Requirement(filePath, inputTrigger);
+        Requirement(csvFile, inputTrigger);
         Succession(inputTrigger, outputTrigger);
         Assignment(inputTrigger, bulletSpawnData);
     }
 
-    private List<BulletSpawnData> ReadCSV(string filePathString)
+    private List<BulletSpawnData> ReadCSV(TextAsset csvFile)
     {
-        StreamReader reader = new StreamReader(filePathString);
+        if (csvFile == null)
+        {
+            Debug.LogError("No CSV file provided");
+            return null;
+        }
+        StringReader reader = new StringReader(csvFile.text);
         // Read the header
         string[] header = reader.ReadLine().Split(',');
         if (header.Length != 4)
