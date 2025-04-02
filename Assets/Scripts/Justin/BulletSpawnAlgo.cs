@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -93,6 +94,7 @@ public class BulletSpawner : Unit
             "SpawnBullets",
             (flow) =>
             {
+                Profiler.BeginSample("BulletSpawner");
                 Vector2Int playerPos = Vector2Int.RoundToInt(
                     flow.GetValue<Vector2>(playerPosition)
                 );
@@ -103,6 +105,7 @@ public class BulletSpawner : Unit
                     GameDataToBoard(playerPos, bulletData, size),
                     numBullets
                 );
+                Profiler.EndSample();
                 return outputTrigger;
             }
         );
@@ -283,34 +286,25 @@ public class BulletSpawner : Unit
         while (validSpawnSets[0].Set.Count < numBulletsToSpawn)
         {
             var newValidSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
+
             // TODO: multithread this for performance, one thread per spawn set
             // For each valid spawn set, try each spawn location and see if it is valid.
-            // Each valid spawn location will create a new spawn set with the new spawn location added to it.
+            var tasks = new List<Task<List<(List<int> Set, BoardNode[,,] Graph)>>>();
             foreach (var spawnSet in validSpawnSets)
             {
-                // look forward from the index of the last bullet in the spawn set
-                // to avoid duplicates
-                for (
-                    int j = spawnSet.Set[spawnSet.Set.Count - 1] + 1;
-                    j < spawnLocations.Count;
-                    j++
-                )
-                {
-                    // Create a deep copy of the board graph for each spawn set
-                    BoardNode[,,] boardGraphCopy = spawnSet.Graph.Clone() as BoardNode[,,];
-                    // Check if the spawn location is valid
-                    if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
-                    {
-                        // If it is valid, add it to the list of valid spawn locations
-                        List<int> newSpawnSet = new List<int>(spawnSet.Set);
-                        newSpawnSet.Add(j);
-                        newValidSpawnSets.Add((newSpawnSet, boardGraphCopy));
-                    }
-                }
+                var task = Task.Run(() => AddToSpawnSet(spawnSet, spawnLocations));
+                tasks.Add(task);
             }
+            Task.WaitAll(tasks.ToArray()); // Wait for all tasks to finish
+            foreach (var task in tasks)
+            {
+                newValidSpawnSets.AddRange(task.Result); // Add the results to the new valid spawn sets
+            }
+
+            // Check if there are any new valid spawn sets
             if (newValidSpawnSets.Count == 0)
             {
-                break; // Could not find any more valid spawns
+                break;
             }
             validSpawnSets = newValidSpawnSets; // Update the valid spawn sets
         }
@@ -345,6 +339,37 @@ public class BulletSpawner : Unit
             bullets.Add(new Bullet(IndexToPosition(spawnPos, boardSize), direction));
         }
         return bullets;
+    }
+
+    /// <summary>
+    /// Attempts to create new spawn sets by adding new spawn locations to the given spawn set.
+    /// </summary>
+    /// <param name="spawnSet"></param>
+    /// <param name=""></param>
+    /// <returns></returns>
+    private List<(List<int> Set, BoardNode[,,] Graph)> AddToSpawnSet(
+        in (List<int> Set, BoardNode[,,] Graph) spawnSet,
+        in List<Vector2Int> spawnLocations
+    )
+    {
+        List<(List<int> Set, BoardNode[,,] Graph)> newSpawnSets =
+            new List<(List<int> Set, BoardNode[,,] Graph)>();
+        // look forward from the index of the last bullet in the spawn set
+        // to avoid duplicates
+        for (int j = spawnSet.Set[spawnSet.Set.Count - 1] + 1; j < spawnLocations.Count; j++)
+        {
+            // Create a deep copy of the board graph for each spawn set
+            BoardNode[,,] boardGraphCopy = spawnSet.Graph.Clone() as BoardNode[,,];
+            // Check if the spawn location is valid
+            if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
+            {
+                // If it is valid, add it to the list of valid spawn locations
+                List<int> newSpawnSet = new List<int>(spawnSet.Set);
+                newSpawnSet.Add(j);
+                newSpawnSets.Add((newSpawnSet, boardGraphCopy));
+            }
+        }
+        return newSpawnSets;
     }
 
     /// <summary>
