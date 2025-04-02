@@ -11,6 +11,12 @@ public struct Bullet
 
     [Inspectable]
     public int direction; // up = 0, left = 1, down = 2, right = 3
+
+    public Bullet(Vector2 position, int direction)
+    {
+        this.position = position;
+        this.direction = direction;
+    }
 }
 
 public class BulletSpawner : Unit
@@ -28,11 +34,25 @@ public class BulletSpawner : Unit
 
     class BoardNode
     {
+        // The turn of the node on the board
+        public int turn;
+
+        // The row and column of the node on the board
+        public int row;
+        public int col;
+
         // Connections to nodes on the previous turn
         public List<BoardNode> prev = new List<BoardNode>();
 
         // Connections to nodes on the next turn
         public List<BoardNode> next = new List<BoardNode>();
+
+        public BoardNode(int turn, int row, int col)
+        {
+            this.turn = turn;
+            this.row = row;
+            this.col = col;
+        }
     }
 
     [DoNotSerialize]
@@ -95,7 +115,7 @@ public class BulletSpawner : Unit
         Assignment(inputTrigger, bulletsToSpawn);
     }
 
-    private int[,] GameDataToBoard(Vector2 playerPos, List<Bullet> bulletData, int size)
+    private int[,] GameDataToBoard(in Vector2 playerPos, in List<Bullet> bulletData, in int size)
     {
         int[,] board = new int[size, size];
         // Set the player position
@@ -115,10 +135,18 @@ public class BulletSpawner : Unit
         return board;
     }
 
-    // This function will attempt to find a set of bullet spawns
-    // for the specific board state up to the number of bullets specified.
-    // If there are not enough valid spawns, it will return as many as possible.
-    private List<Bullet> GetBulletSpawns(int[,] board, int numBulletsToSpawn)
+    /// <summary>
+    /// This function will attempt to find a set of bullet spawns
+    /// for the specific board state up to the number of bullets specified.
+    /// If there are not enough valid spawns, it will return as many as possible.
+    /// Throws an exception if the player is not found on the board or if
+    /// the spawn sets have different number of bullets. This should never happen, but it is here for safety.
+    /// </summary>
+    /// <param name="board"></param>
+    /// <param name="numBulletsToSpawn"></param>
+    /// <returns>Returns a list of valid bullets to spawn of max size numBulletsToSpawn</returns>
+    /// <exception cref="Exception"></exception>
+    private List<Bullet> GetBulletSpawns(in int[,] board, in int numBulletsToSpawn)
     {
         // First, create a directed graph where each node is a tile and each layer is a turn.
         // A connection between two nodes is a valid move for the player that will not hit a bullet.
@@ -133,7 +161,7 @@ public class BulletSpawner : Unit
             {
                 for (int col = 0; col < boardSize; col++)
                 {
-                    boardGraph[turn, row, col] = new BoardNode();
+                    boardGraph[turn, row, col] = new BoardNode(turn, row, col);
                 }
             }
         }
@@ -147,7 +175,6 @@ public class BulletSpawner : Unit
                 if ((board[row, col] & (int)BoardState.Player) > 0)
                 {
                     playerNode = boardGraph[0, row, col];
-                    playerNode.prev.Add(playerNode);
                     Debug.Log("Player found at (" + col + ", " + row + ")");
                     break;
                 }
@@ -169,154 +196,113 @@ public class BulletSpawner : Unit
         // For each turn, the nodes that have connections to the previous turn
         // are the nodes that the player can get to. For each of those nodes,
         // check the 4 adjacent tiles on the next turn to see if they are valid moves.
-        for (int turn = 0; turn < turnsToSim - 1; turn++)
+        Queue<BoardNode> queue = new Queue<BoardNode>();
+        queue.Enqueue(playerNode);
+        while (queue.Count > 0)
         {
-            for (int row = 1; row < boardSize - 1; row++)
+            BoardNode currentNode = queue.Dequeue();
+            if (currentNode.turn == turnsToSim - 1)
+                continue; // Skip the last turn, we don't need to check it
+
+            // Check the 4 adjacent tiles
+            // 0 = up, 1 = left, 2 = down, 3 = right
+            for (int d = 0; d < 4; d++)
             {
-                for (int col = 1; col < boardSize - 1; col++)
-                {
-                    BoardNode currentNode = boardGraph[turn, row, col];
-                    if (currentNode.prev.Count == 0)
-                        continue; // No connections to the previous turn, skip this node
+                Vector2 playerDir = BulletSpawner.directions[d];
+                int turn = currentNode.turn;
+                int nextRow = currentNode.row + (int)playerDir.y;
+                int nextCol = currentNode.col + (int)playerDir.x;
 
-                    // Check the 4 adjacent tiles
-                    // 0 = up, 1 = left, 2 = down, 3 = right
-                    for (int d = 0; d < 4; d++)
-                    {
-                        Vector2 playerDir = BulletSpawner.directions[d];
-                        int nextRow = row + (int)playerDir.y;
-                        int nextCol = col + (int)playerDir.x;
+                // Player can only move in the inner tiles
+                bool validIdx =
+                    nextRow >= 1
+                    && nextRow < boardSize - 1
+                    && nextCol >= 1
+                    && nextCol < boardSize - 1;
+                if (!validIdx)
+                    continue; // Skip invalid indices
 
-                        // Player can only move in the inner tiles
-                        bool validIdx =
-                            nextRow >= 1
-                            && nextRow < boardSize - 1
-                            && nextCol >= 1
-                            && nextCol < boardSize - 1;
-                        if (!validIdx)
-                            continue; // Skip invalid indices
+                // Check if the next tile has a bullet
+                bool hasBullet =
+                    (boardStates[turn + 1][nextRow, nextCol] & (int)BoardState.Bullet) > 0;
+                if (hasBullet)
+                    continue; // Player cannot move to a tile with a bullet
 
-                        // Check if the next tile has a bullet
-                        bool hasBullet =
-                            (boardStates[turn + 1][nextRow, nextCol] & (int)BoardState.Bullet) > 0;
-                        if (hasBullet)
-                            continue; // Player is moving into a tile with a bullet on it
+                // Check if player is swapping with a bullet
+                // 0 = up, 1 = left, 2 = down, 3 = right
+                // 1 = BulletUp, 2 = BulletLeft, 3 = BulletDown, 4 = BulletRight
+                int bitShift = (d + 2) % 4 + 1;
+                if ((boardStates[turn][nextRow, nextCol] & (1 << bitShift)) > 0)
+                    continue; // Player cannot move into a bullet
 
-                        // Check if player is swapping with a bullet
-                        int bullet = boardStates[turn][nextRow, nextCol] & (int)BoardState.Bullet;
-                        // 0 = up, 1 = left, 2 = down, 3 = right
-                        // 1 = BulletUp, 2 = BulletLeft, 3 = BulletDown, 4 = BulletRight
-                        int bitShift;
-                        if (d == 0) // up
-                            bitShift = 3; // BulletDown
-                        else if (d == 1) // left
-                            bitShift = 4; // BulletRight
-                        else if (d == 2) // down
-                            bitShift = 1; // BulletUp
-                        else // right
-                            bitShift = 2; // BulletLeft
-                        if ((bullet & (1 << bitShift)) > 0)
-                            continue; // Player is swapping with a bullet, skip this node
-
-                        BoardNode nextNode = boardGraph[turn + 1, nextRow, nextCol];
-                        currentNode.next.Add(nextNode);
-                        nextNode.prev.Add(currentNode);
-                    }
-                }
+                // The player can move into this tile, add it to the graph
+                BoardNode nextNode = boardGraph[turn + 1, nextRow, nextCol];
+                currentNode.next.Add(nextNode);
+                nextNode.prev.Add(currentNode);
+                queue.Enqueue(nextNode); // Add the next node to the queue
             }
         }
 
         // Check if there are any connections to the last turn
-        bool isPossible = false;
-        for (int row = 0; row < boardSize; row++)
+        if (!isBoardSolvable(boardGraph))
         {
-            for (int col = 0; col < boardSize; col++)
-            {
-                BoardNode currentNode = boardGraph[turnsToSim - 1, row, col];
-                if (currentNode.prev.Count > 0)
-                {
-                    isPossible = true;
-                    break;
-                }
-            }
-        }
-        if (!isPossible)
-        {
-            Debug.Log("Player will be stuck, no bullets can be spawned");
+            Debug.Log("Player is stuck, no bullets can be spawned");
             return new List<Bullet>();
         }
 
         // Now we check each possible bullet spawn location and see if it is valid.
         // A valid spawn location is one that will not completely block player paths, that is,
         // the last layer of the graph must have at least one connection to the previous layer.
-        // Bullets can only spawn on the extreme edges of the board and direct into the board
-        List<Vector2> spawnLocations = new List<Vector2>();
-        for (int row = 0; row < boardSize; row++)
-        {
-            for (int col = 0; col < boardSize; col++)
-            {
-                // Check if the tile is on the edge of the board and not a corner tile
-                bool isEdgeTile =
-                    row == 0 || row == boardSize - 1 || col == 0 || col == boardSize - 1;
-                bool isCornerTile =
-                    (row == 0 && col == 0)
-                    || (row == 0 && col == boardSize - 1)
-                    || (row == boardSize - 1 && col == 0)
-                    || (row == boardSize - 1 && col == boardSize - 1);
-                if (!isEdgeTile || isCornerTile)
-                    continue; // Skip non-edge tiles and corner tiles
+        // Bullets can only spawn on the extreme edges of the board and direct into the board.
+        List<Vector2> spawnLocations = GetSpawnLocations(boardSize);
 
-                spawnLocations.Add(new Vector2(col, row));
-            }
-        }
-
-        // TODO: Store the changed board graphs for each spawn set OR recompute the board graph every time
-        // List of list of indices of valid spawn locations
-        // Each list of indices represents a set of bullets that can be spawned
-        List<List<int>> validSpawnSets = new List<List<int>>();
+        // Each tuple represents a set of bullets that can be spawned and the board graph after spawning them
+        var validSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
         for (int i = 0; i < spawnLocations.Count; i++)
         {
+            // Create a deep copy of the board graph for each spawn set
+            BoardNode[,,] boardGraphCopy = DeepCopyBoardGraph(boardGraph);
             // Check if the spawn location is valid
-            if (IsValidSpawn(boardGraph, spawnLocations[i]))
+            if (IsValidSpawn(ref boardGraphCopy, spawnLocations[i]))
             {
                 // If it is valid, add it to the list of valid spawn locations
-                List<int> spawnSet = new List<int>();
-                spawnSet.Add(i);
-                validSpawnSets.Add(spawnSet);
+                validSpawnSets.Add((new List<int> { i }, boardGraphCopy));
             }
         }
 
         // Add more bullets until you can't add any more
-        while (validSpawnSets[0].Count < numBulletsToSpawn)
+        while (validSpawnSets[0].Set.Count < numBulletsToSpawn)
         {
-            List<List<int>> newValidSpawnSets = new List<List<int>>();
+            var newValidSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
             for (int i = 0; i < validSpawnSets.Count; i++)
             {
-                List<int> spawnSet = validSpawnSets[i];
+                List<int> spawnSet = validSpawnSets[i].Set;
                 // look forward from the index of the last bullet in the spawn set
                 // to avoid duplicates
                 for (int j = spawnSet[spawnSet.Count - 1] + 1; j < spawnLocations.Count; j++)
                 {
+                    // Create a deep copy of the board graph for each spawn set
+                    BoardNode[,,] boardGraphCopy = DeepCopyBoardGraph(validSpawnSets[i].Graph);
                     // Check if the spawn location is valid
-                    if (IsValidSpawn(boardGraph, spawnLocations[j]))
+                    if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
                     {
                         // If it is valid, add it to the list of valid spawn locations
                         List<int> newSpawnSet = new List<int>(spawnSet);
                         newSpawnSet.Add(j);
-                        newValidSpawnSets.Add(newSpawnSet);
+                        newValidSpawnSets.Add((newSpawnSet, boardGraphCopy));
                     }
                 }
             }
             if (newValidSpawnSets.Count == 0)
             {
-                break; // No more valid spawn sets, break out of the loop
+                break; // Could not find any more valid spawns
             }
             validSpawnSets = newValidSpawnSets; // Update the valid spawn sets
         }
         // check that all the spawn sets have the same number of bullets
         for (int i = 0; i < validSpawnSets.Count; i++)
         {
-            if (validSpawnSets[i].Count != validSpawnSets[0].Count)
+            if (validSpawnSets[i].Set.Count != validSpawnSets[0].Set.Count)
             {
                 throw new Exception("Spawn sets have different number of bullets");
             }
@@ -325,62 +311,32 @@ public class BulletSpawner : Unit
 
         // Convert the valid spawn sets to bullet objects
         List<Bullet> bullets = new List<Bullet>();
-        for (int i = 0; i < validSpawnSets[0].Count; i++)
+        foreach (int spawnIdx in validSpawnSets[0].Set)
         {
-            int spawnIdx = validSpawnSets[0][i];
             Vector2 spawnPos = spawnLocations[spawnIdx];
-            Vector2 posIdx = IndexToPosition(spawnPos, boardSize);
-            int direction = 0;
+
             // up = 0, left = 1, down = 2, right = 3
+            int direction = 0;
             if (spawnPos.y == boardSize - 1)
-            {
                 direction = 0; // up
-            }
             else if (spawnPos.x == boardSize - 1)
-            {
                 direction = 1; // left
-            }
             else if (spawnPos.y == 0)
-            {
                 direction = 2; // down
-            }
             else if (spawnPos.x == 0)
-            {
                 direction = 3; // right
-            }
-            Bullet bullet = new Bullet { position = posIdx, direction = direction, };
-            bullets.Add(bullet);
+
+            bullets.Add(new Bullet(IndexToPosition(spawnPos, boardSize), direction));
         }
         return bullets;
     }
 
-    // Converts a 2D array index to a 2D position on the board
-    // (0,0) is the top left of the array,
-    // (0,0) is the center of the board.
-    /* Example: size = 3
-    *   (0,0) (1,0) (2,0)    (-1,1)  (0,1)  (1,1)
-    *   (0,1) (1,1) (2,1) -> (-1,0)  (0,0)  (1,0)
-    *   (0,2) (1,2) (2,2)    (-1,-1) (0,-1) (1,-1)
-    */
-    private Vector2 IndexToPosition(Vector2 idx, int size)
-    {
-        int center = size / 2;
-        return new Vector2(idx.x - center, center - idx.y);
-    }
-
-    /* Example: size = 3
-    *   (-1,1)  (0,1)  (1,1)     (0,0) (1,0) (2,0)
-    *   (-1,0)  (0,0)  (1,0)  -> (0,1) (1,1) (2,1)
-    *   (-1,-1) (0,-1) (1,-1)    (0,2) (1,2) (2,2)
-    */
-    private Vector2 PositionToIndex(Vector2 pos, int size)
-    {
-        int center = size / 2;
-        return new Vector2(pos.x + center, center - pos.y);
-    }
-
-    // Advances the board by one turn, moving the bullets
-    private int[,] AdvanceBoard(int[,] board)
+    /// <summary>
+    /// Advances the board by one turn, moving the bullets in the direction they are facing.
+    /// </summary>
+    /// <param name="board"></param>
+    /// <returns>Returns the given board advanced by one turn</returns>
+    private int[,] AdvanceBoard(in int[,] board)
     {
         int boardSize = board.GetLength(0);
         int[,] nextBoard = new int[boardSize, boardSize];
@@ -400,7 +356,7 @@ public class BulletSpawner : Unit
                     // 1 << 1 = BulletUp, 1 << 2 = BulletLeft, 1 << 3 = BulletDown, 1 << 4 = BulletRight
                     int dir = bullet & (1 << (d + 1));
                     if (dir == 0)
-                        continue; // No bullet in this direction
+                        continue; // No bullet going this direction
 
                     Vector2 direction = BulletSpawner.directions[d];
                     int nextRow = row + (int)direction.y;
@@ -417,10 +373,112 @@ public class BulletSpawner : Unit
         return nextBoard;
     }
 
-    // Checks if spawning a bullet at the given location will completely cut off
-    // all paths for the player. This is done by removing node connections at each
-    // turn the bullet will be on.
-    private bool IsValidSpawn(BoardNode[,,] boardGraph, Vector2 posIdx)
+    /// <summary>
+    /// Checks if the given board is solvable, meaning the player can reach the last turn.
+    /// A solvable board is one that has at least one connection to the last turn.
+    /// </summary>
+    /// <param name="boardGraph"></param>
+    /// <returns>Returns true if the board is valid, otherwise returns false</returns>
+    private bool isBoardSolvable(in BoardNode[,,] boardGraph)
+    {
+        int lastTurn = boardGraph.GetLength(0) - 1;
+        int size = boardGraph.GetLength(1);
+        for (int row = 0; row < size; row++)
+        {
+            for (int col = 0; col < size; col++)
+            {
+                BoardNode currentNode = boardGraph[lastTurn, row, col];
+                if (currentNode.prev.Count > 0)
+                {
+                    return true; // The last turn can be reached
+                }
+            }
+        }
+        return false; // Invalid board, no way to get to the last turn
+    }
+
+    /// <summary>
+    /// Gets the possible spawn locations for bullets for a board of the given size.
+    /// Bullets can only spawn on the extreme edges of the board.
+    /// </summary>
+    /// <param name="size"></param>
+    /// <returns>Returns a list of the possible spawn locations</returns>
+    private List<Vector2> GetSpawnLocations(in int size)
+    {
+        List<Vector2> spawnLocations = new List<Vector2>();
+        for (int row = 0; row < size; row++)
+        {
+            for (int col = 0; col < size; col++)
+            {
+                // Check if the tile is on the edge of the board and not a corner tile
+                bool isEdgeTile = row == 0 || row == size - 1 || col == 0 || col == size - 1;
+                bool isCornerTile =
+                    (row == 0 && col == 0)
+                    || (row == 0 && col == size - 1)
+                    || (row == size - 1 && col == 0)
+                    || (row == size - 1 && col == size - 1);
+                if (!isEdgeTile || isCornerTile)
+                    continue; // Skip non-edge tiles and corner tiles
+                spawnLocations.Add(new Vector2(col, row));
+            }
+        }
+        return spawnLocations;
+    }
+
+    /// <summary>
+    /// Creates a deep copy of the board graph.
+    /// </summary>
+    /// <param name="boardGraph"></param>
+    /// <returns></returns>
+    private BoardNode[,,] DeepCopyBoardGraph(in BoardNode[,,] boardGraph)
+    {
+        int turns = boardGraph.GetLength(0);
+        int size = boardGraph.GetLength(1);
+        BoardNode[,,] newBoardGraph = new BoardNode[turns, size, size];
+        for (int turn = 0; turn < turns; turn++)
+        {
+            for (int row = 0; row < size; row++)
+            {
+                for (int col = 0; col < size; col++)
+                {
+                    newBoardGraph[turn, row, col] = new BoardNode(turn, row, col);
+                }
+            }
+        }
+        // Copy the connections
+        for (int turn = 0; turn < turns; turn++)
+        {
+            for (int row = 0; row < size; row++)
+            {
+                for (int col = 0; col < size; col++)
+                {
+                    BoardNode currentNode = boardGraph[turn, row, col];
+                    BoardNode newNode = newBoardGraph[turn, row, col];
+                    foreach (BoardNode nextNode in currentNode.next)
+                    {
+                        newNode.next.Add(newBoardGraph[turn + 1, nextNode.row, nextNode.col]);
+                    }
+                    foreach (BoardNode prevNode in currentNode.prev)
+                    {
+                        newNode.prev.Add(newBoardGraph[turn - 1, prevNode.row, prevNode.col]);
+                    }
+                }
+            }
+        }
+        return newBoardGraph;
+    }
+
+    /// <summary>
+    /// Checks if the given spawn location is valid.
+    /// A valid spawn location is one that will not completely block player paths,
+    /// that is, the last layer of the graph must have at least one connection to the previous layer.
+    /// Bullets can only spawn on the extreme edges of the board and direct into the board.
+    /// Modifies the board graph to remove connections
+    /// </summary>
+    /// <param name="boardGraph"></param>
+    /// <param name="posIdx"></param>
+    /// <returns>Returns true if the given position is a valid spawn, false otherwise</returns>
+    private bool IsValidSpawn(ref BoardNode[,,] boardGraph, in Vector2 posIdx)
     {
         // determine the direction of the bullet
         Vector2 direction = new Vector2(0, 0);
@@ -434,16 +492,14 @@ public class BulletSpawner : Unit
         else if (posIdx.y == size - 1)
             direction = new Vector2(0, -1); // up
 
+        BoardNode[,,] oldGraph = boardGraph.Clone() as BoardNode[,,];
         Queue<BoardNode> queue = new Queue<BoardNode>();
-
         // Find all the nodes that the bullet will be on
         // and remove all connections to the previous turn
         for (int turn = 0; turn < boardGraph.GetLength(0); turn++)
         {
             Vector2 currentPos = posIdx + direction * turn;
-            int row = (int)currentPos.y;
-            int col = (int)currentPos.x;
-            BoardNode currentNode = boardGraph[turn, row, col];
+            BoardNode currentNode = boardGraph[turn, (int)currentPos.y, (int)currentPos.x];
             if (currentNode.prev.Count == 0)
                 continue; // No connections to the previous turn, skip this node
 
@@ -471,19 +527,44 @@ public class BulletSpawner : Unit
             currentNode.next.Clear();
         }
 
-        // Check if there are any connections to the last turn
-        int lastTurn = boardGraph.GetLength(0) - 1;
-        for (int row = 0; row < boardGraph.GetLength(1); row++)
-        {
-            for (int col = 0; col < boardGraph.GetLength(2); col++)
-            {
-                BoardNode currentNode = boardGraph[lastTurn, row, col];
-                if (currentNode.prev.Count > 0)
-                {
-                    return true; // valid spawn
-                }
-            }
-        }
-        return false; // invalid spawn, all paths are blocked
+        return isBoardSolvable(boardGraph);
+    }
+
+    /// <summary>
+    /// Converts a 2D array index to a 2D position on the board.
+    /// (0,0) is the center of the board,
+    /// (0,0) is the top left of the array.
+    /// </summary>
+    /// <param name="idx"></param>
+    /// <param name="size"></param>
+    /// <returns>Returns the position on the board</returns>
+    /* Example: size = 3
+    *   (0,0) (1,0) (2,0)    (-1,1)  (0,1)  (1,1)
+    *   (0,1) (1,1) (2,1) -> (-1,0)  (0,0)  (1,0)
+    *   (0,2) (1,2) (2,2)    (-1,-1) (0,-1) (1,-1)
+    */
+    private Vector2 IndexToPosition(in Vector2 idx, in int size)
+    {
+        int center = size / 2;
+        return new Vector2(idx.x - center, center - idx.y);
+    }
+
+    /// <summary>
+    /// Converts a 2D position on the board to a 2D array index.
+    /// (0,0) is the center of the board,
+    /// (0,0) is the top left of the array.
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <param name="size"></param>
+    /// <returns>Returns the 2D array index as a Vector2, where the x is the col and y is the row</returns>
+    /* Example: size = 3
+    *   (-1,1)  (0,1)  (1,1)     (0,0) (1,0) (2,0)
+    *   (-1,0)  (0,0)  (1,0)  -> (0,1) (1,1) (2,1)
+    *   (-1,-1) (0,-1) (1,-1)    (0,2) (1,2) (2,2)
+    */
+    private Vector2 PositionToIndex(in Vector2 pos, in int size)
+    {
+        int center = size / 2;
+        return new Vector2(pos.x + center, center - pos.y);
     }
 }
