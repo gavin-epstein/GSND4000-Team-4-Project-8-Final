@@ -1384,8 +1384,12 @@ MonoBehaviour:
   _data:
     _json: '{"declarations":{"Kind":"Scene","collection":{"$content":[{"name":"DashCount","value":{"$content":2,"$type":"System.Int32"},"typeHandle":{"Identification":"System.Int32,
       mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"currentHand","value":{"$content":"ExampleCard","$type":"Card"},"typeHandle":{"Identification":"Card,
-      Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"}}'
-    _objectReferences: []
+      Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"Cards","value":{"$content":[{"$content":0,"$type":"UnityEngine.Object"},{"$content":1,"$type":"UnityEngine.Object"}],"$type":"Unity.VisualScripting.AotList"},"typeHandle":{"Identification":"Unity.VisualScripting.AotList,
+      Unity.VisualScripting.Core, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"GridPosition","value":{"x":0.0,"y":0.0,"$type":"UnityEngine.Vector2"},"typeHandle":{"Identification":"UnityEngine.Vector2,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 572576073498266423, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+    - {fileID: 572576073498266423, guid: 95384323f9c22aa48932d02ea34f67b8, type: 3}
 --- !u!4 &1290727771
 Transform:
   m_ObjectHideFlags: 0
