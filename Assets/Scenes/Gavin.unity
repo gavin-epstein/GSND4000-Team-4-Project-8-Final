@@ -665,6 +665,71 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!1001 &280128125
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 572576073498266423, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_Name
+      value: CoffeSipCard (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 572576073498266423, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2273040055438443173, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -3.68
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.17
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.4242
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
 --- !u!1 &318855845
 GameObject:
   m_ObjectHideFlags: 0
@@ -2800,6 +2865,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CoffeSipCard
       objectReference: {fileID: 0}
+    - target: {fileID: 572576073498266423, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6665273419589620142, guid: a82a6ee00b05c4e49b7cff6d63cd49e7, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.000000040978
@@ -3961,7 +4030,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -5986225142682892160, guid: 2145e551b18a31a42ac797a159af16ba, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -3984,3 +4054,4 @@ SceneRoots:
   - {fileID: 818569260}
   - {fileID: 70561577}
   - {fileID: 1447217486}
+  - {fileID: 280128125}
