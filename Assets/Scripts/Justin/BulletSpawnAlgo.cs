@@ -34,96 +34,60 @@ public class BulletSpawner : Unit
         Bullet = BulletUp | BulletLeft | BulletDown | BulletRight,
     }
 
-    class BoardNode
+    struct BoardNode
     {
-        // The turn of the node on the board
-        public int turn;
+        public static int Mask = 0x0F; // 4 bits each for the row and col
 
-        // The row and column of the node on the board
-        public int row;
-        public int col;
+        // Shift the bits to the right and mask them to get the direction
+        //   Up        Left      Down      Right
+        //   Row  Col  Row  Col  Row  Col  Row  Col
+        // 0b0000 0000 0000 0000 0000 0000 0000 0000
+        // Every byte is the row and col of the node it is connected to
 
         // Connections to nodes on the previous turn
-        public List<Vector2Int> prev = new List<Vector2Int>();
+        public int prev;
 
         // Connections to nodes on the next turn
-        public List<Vector2Int> next = new List<Vector2Int>();
+        public int next;
 
-        public BoardNode(int turn, int row, int col)
+        public (int row, int col) GetConnection(bool next, int direction)
         {
-            this.turn = turn;
-            this.row = row;
-            this.col = col;
-        }
-
-        public BoardNode DeepCopy()
-        {
-            // Create a deep copy of the object
-            BoardNode copy = new BoardNode(turn, row, col);
-            copy.prev = new List<Vector2Int>(prev);
-            copy.next = new List<Vector2Int>(next);
-            return copy;
-        }
-    }
-
-    class BoardGraph
-    {
-        public BoardNode[,,] boardGraph;
-
-        public BoardGraph(int turns, int rows, int cols, bool init = true)
-        {
-            boardGraph = new BoardNode[turns, rows, cols];
-            if (!init)
-                return;
-            for (int turn = 0; turn < turns; turn++)
+            int connections = next ? this.next : this.prev;
+            // Shift the bits to the right and mask them to get the direction
+            // 0 = up, 1 = left, 2 = down, 3 = right
+            // Every byte is the col and row of the node it is connected to
+            int row = (connections >> (direction * 8 + 4)) & Mask;
+            int col = (connections >> (direction * 8)) & Mask;
+            if (row == 0 && col == 0)
             {
-                for (int row = 0; row < rows; row++)
-                {
-                    for (int col = 0; col < cols; col++)
-                    {
-                        boardGraph[turn, row, col] = new BoardNode(turn, row, col);
-                    }
-                }
+                return (-1, -1); // No connection
+            }
+            return (row, col);
+        }
+
+        public void AddConnection(bool next, int direction, int row, int col)
+        {
+            if (next)
+            {
+                this.next |= (((row & Mask) << 4) | (col & Mask)) << (direction * 8);
+            }
+            else
+            {
+                this.prev |= (((row & Mask) << 4) | (col & Mask)) << (direction * 8);
             }
         }
 
-        public BoardGraph DeepCopy()
+        public void RemoveConnection(bool next, int direction, int row, int col)
         {
-            // Copy each node in the board graph to avoid reference issues
-            BoardGraph copy = new BoardGraph(
-                boardGraph.GetLength(0),
-                boardGraph.GetLength(1),
-                boardGraph.GetLength(2),
-                false
-            );
-            for (int turn = 0; turn < boardGraph.GetLength(0); turn++)
+            int mask = 0xFF << (direction * 8);
+            if (next)
             {
-                for (int row = 0; row < boardGraph.GetLength(1); row++)
-                {
-                    for (int col = 0; col < boardGraph.GetLength(2); col++)
-                    {
-                        copy[turn, row, col] = boardGraph[turn, row, col].DeepCopy();
-                    }
-                }
+                this.next &= ~mask;
             }
-            return copy;
-        }
-
-        public BoardNode this[int turn, int row, int col]
-        {
-            get { return boardGraph[turn, row, col]; }
-            set { boardGraph[turn, row, col] = value; }
-        }
-
-        public BoardNode this[int turn, Vector2Int pos]
-        {
-            get { return boardGraph[turn, pos.y, pos.x]; }
-            set { boardGraph[turn, pos.y, pos.x] = value; }
-        }
-
-        public int GetLength(int dim)
-        {
-            return boardGraph.GetLength(dim);
+            else
+            {
+                this.prev &= ~mask;
+            }
         }
     }
 
@@ -240,22 +204,24 @@ public class BulletSpawner : Unit
         int boardSize = board.GetLength(0);
         // After boardSize - 2 turns, all bullets spawned on turn 0 will be gone. Add 1 for the current turn.
         int turnsToSim = boardSize - 1;
-        BoardGraph boardGraph = new BoardGraph(turnsToSim, boardSize, boardSize);
+        BoardNode[,,] boardGraph = new BoardNode[turnsToSim, boardSize, boardSize];
 
         // Find the player
-        BoardNode playerNode = null;
+        int playerRow = -1;
+        int playerCol = -1;
         for (int row = 0; row < boardSize; row++)
         {
             for (int col = 0; col < boardSize; col++)
             {
                 if ((board[row, col] & (int)BoardState.Player) > 0)
                 {
-                    playerNode = boardGraph[0, row, col];
+                    playerRow = row;
+                    playerCol = col;
                     break;
                 }
             }
         }
-        if (playerNode == null)
+        if (playerRow == -1 || playerCol == -1)
         {
             throw new Exception("Player not found on board");
         }
@@ -271,22 +237,22 @@ public class BulletSpawner : Unit
         // For each turn, the nodes that have connections to the previous turn
         // are the nodes that the player can get to. For each of those nodes,
         // check the 4 adjacent tiles on the next turn to see if they are valid moves.
-        Queue<BoardNode> queue = new Queue<BoardNode>();
-        queue.Enqueue(playerNode);
+        Queue<(int, int, int)> queue = new Queue<(int, int, int)>();
+        queue.Enqueue((0, playerRow, playerCol));
         while (queue.Count > 0)
         {
-            BoardNode currentNode = queue.Dequeue();
-            if (currentNode.turn == turnsToSim - 1)
+            (int turn, int row, int col) = queue.Dequeue();
+            BoardNode currentNode = boardGraph[turn, row, col];
+            if (turn == turnsToSim - 1)
                 continue; // Skip the last turn, we don't need to check it
 
             // Check the 4 adjacent tiles
             // 0 = up, 1 = left, 2 = down, 3 = right
             for (int d = 0; d < 4; d++)
             {
-                Vector2Int playerDir = BulletSpawner.directions[d];
-                int turn = currentNode.turn;
-                int nextRow = currentNode.row + playerDir.y;
-                int nextCol = currentNode.col + playerDir.x;
+                Vector2Int moveDir = BulletSpawner.directions[d];
+                int nextRow = row + moveDir.y;
+                int nextCol = col + moveDir.x;
 
                 // Player can only move in the inner tiles
                 bool validIdx =
@@ -312,10 +278,12 @@ public class BulletSpawner : Unit
 
                 // The player can move into this tile, add it to the graph
                 BoardNode nextNode = boardGraph[turn + 1, nextRow, nextCol];
-                currentNode.next.Add(new Vector2Int(nextCol, nextRow));
-                nextNode.prev.Add(new Vector2Int(currentNode.col, currentNode.row));
-                queue.Enqueue(nextNode); // Add the next node to the queue
+                currentNode.AddConnection(true, d, nextRow, nextCol);
+                nextNode.AddConnection(false, (d + 2) % 4, row, col);
+                boardGraph[turn + 1, nextRow, nextCol] = nextNode;
+                queue.Enqueue((turn + 1, nextRow, nextCol));
             }
+            boardGraph[turn, row, col] = currentNode;
         }
 
         // Check if there are any connections to the last turn
@@ -345,7 +313,7 @@ public class BulletSpawner : Unit
             spawnSet = GetSpawnSetChoose(boardGraph, spawnLocations, numBulletsToSpawn);
         }
 
-        // Convert the valid spawn sets to bdullet objects
+        // Convert the valid spawn sets to bullet objects
         List<Bullet> bullets = new List<Bullet>();
         foreach (int spawnIdx in spawnSet)
         {
@@ -415,7 +383,7 @@ public class BulletSpawner : Unit
     /// </summary>
     /// <param name="boardGraph"></param>
     /// <returns>Returns true if the board is valid, otherwise returns false</returns>
-    private bool isBoardSolvable(in BoardGraph boardGraph)
+    private bool isBoardSolvable(in BoardNode[,,] boardGraph)
     {
         int lastTurn = boardGraph.GetLength(0) - 1;
         int size = boardGraph.GetLength(1);
@@ -423,8 +391,7 @@ public class BulletSpawner : Unit
         {
             for (int col = 0; col < size; col++)
             {
-                BoardNode currentNode = boardGraph[lastTurn, row, col];
-                if (currentNode.prev.Count > 0)
+                if (boardGraph[lastTurn, row, col].prev > 0)
                 {
                     return true; // The last turn can be reached
                 }
@@ -470,27 +437,28 @@ public class BulletSpawner : Unit
     /// <param name="numBulletsToSpawn"></param>
     /// <returns></returns>
     private List<int> GetSpawnSetIterative(
-        in BoardGraph boardGraph,
+        in BoardNode[,,] boardGraph,
         in List<Vector2Int> spawnLocations,
         int numBulletsToSpawn
     )
     {
         List<int> spawnSet = new List<int>();
+        BoardNode[,,] currentGraph = boardGraph.Clone() as BoardNode[,,];
         while (spawnSet.Count < numBulletsToSpawn)
         {
             // The list of possible spawn locations for the next bullet
-            List<int> validBullets = new List<int>();
+            List<(int Idx, BoardNode[,,] Graph)> validBullets = new List<(int, BoardNode[,,])>();
             for (int i = 0; i < spawnLocations.Count; i++)
             {
                 if (spawnSet.Contains(i))
                     continue; // Skip already selected spawn locations
                 // Create a deep copy of the board graph for each bullet check
-                BoardGraph boardGraphCopy = boardGraph.DeepCopy();
+                BoardNode[,,] boardGraphCopy = currentGraph.Clone() as BoardNode[,,];
                 // Check if the spawn location is valid
                 if (IsValidSpawn(ref boardGraphCopy, spawnLocations[i]))
                 {
                     // If it is valid, add it to the list of valid spawn locations
-                    validBullets.Add(i);
+                    validBullets.Add((i, boardGraphCopy));
                 }
             }
             if (validBullets.Count == 0)
@@ -500,11 +468,13 @@ public class BulletSpawner : Unit
             }
             // TODO: Select based on a difficulty heuristic
             // Select a random spawn location from the list of valid spawn locations
-            // int randomIdx = UnityEngine.Random.Range(0, nextBullets.Count);
-            int randomIdx = 0;
-            int spawnIdx = validBullets[randomIdx];
-            spawnSet.Add(spawnIdx); // Add the spawn location to the list of selected spawn locations
+            int randomIdx = UnityEngine.Random.Range(0, validBullets.Count);
+            int spawnIdx = validBullets[randomIdx].Idx;
+            spawnSet.Add(spawnIdx);
+            currentGraph = validBullets[randomIdx].Graph;
         }
+        Debug.Log("Spawning " + spawnSet.Count + " bullets");
+
         return spawnSet;
     }
 
@@ -518,17 +488,17 @@ public class BulletSpawner : Unit
     /// <returns></returns>
     /// <exception cref="Exception"></exception>
     private List<int> GetSpawnSetChoose(
-        in BoardGraph boardGraph,
+        in BoardNode[,,] boardGraph,
         List<Vector2Int> spawnLocations,
         int numBulletsToSpawn
     )
     {
         // Each tuple represents a set of bullets that can be spawned and the board graph after spawning them
-        var validSpawnSets = new List<(List<int> Set, BoardGraph Graph)>();
+        var validSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
         for (int i = 0; i < spawnLocations.Count; i++)
         {
             // Create a deep copy of the board graph for each spawn set
-            BoardGraph boardGraphCopy = boardGraph.DeepCopy();
+            BoardNode[,,] boardGraphCopy = boardGraph.Clone() as BoardNode[,,];
             // Check if the spawn location is valid
             if (IsValidSpawn(ref boardGraphCopy, spawnLocations[i]))
             {
@@ -546,48 +516,24 @@ public class BulletSpawner : Unit
         // Add more bullets until you can't add any more
         while (validSpawnSets[0].Set.Count < numBulletsToSpawn)
         {
-            var newValidSpawnSets = new List<(List<int> Set, BoardGraph Graph)>();
+            var newValidSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
 
             // For each valid spawn set, try each spawn location and see if it is valid.
-
-            // // Multithreaded approach
-            bool multithreaded = false;
-            if (multithreaded)
+            foreach (var setGraph in validSpawnSets)
             {
-                var tasks = new List<Task<List<(List<int> Set, BoardGraph Graph)>>>();
-                foreach (var spawnSet in validSpawnSets)
+                var spawnSet = setGraph.Set;
+                // look forward from the index of the last bullet in the spawn set to avoid duplicates
+                for (int j = spawnSet[spawnSet.Count - 1] + 1; j < spawnLocations.Count; j++)
                 {
-                    var task = Task.Run(() => AddToSpawnSet(spawnSet, spawnLocations));
-                    tasks.Add(task);
-                }
-                Task.WaitAll(tasks.ToArray()); // Wait for all tasks to finish
-                foreach (var task in tasks)
-                {
-                    newValidSpawnSets.AddRange(task.Result); // Add the results to the new valid spawn sets
-                }
-            }
-            else
-            {
-                foreach (var spawnSet in validSpawnSets)
-                {
-                    // look forward from the index of the last bullet in the spawn set
-                    // to avoid duplicates
-                    for (
-                        int j = spawnSet.Set[spawnSet.Set.Count - 1] + 1;
-                        j < spawnLocations.Count;
-                        j++
-                    )
+                    // Create a deep copy of the board graph for each spawn set
+                    BoardNode[,,] boardGraphCopy = setGraph.Graph.Clone() as BoardNode[,,];
+                    // Check if the spawn location is valid
+                    if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
                     {
-                        // Create a deep copy of the board graph for each spawn set
-                        BoardGraph boardGraphCopy = spawnSet.Graph.DeepCopy();
-                        // Check if the spawn location is valid
-                        if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
-                        {
-                            // If it is valid, add it to the list of valid spawn locations
-                            List<int> newSpawnSet = new List<int>(spawnSet.Set);
-                            newSpawnSet.Add(j);
-                            newValidSpawnSets.Add((newSpawnSet, boardGraphCopy));
-                        }
+                        // If it is valid, add it to the list of valid spawn locations
+                        List<int> newSpawnSet = new List<int>(spawnSet);
+                        newSpawnSet.Add(j);
+                        newValidSpawnSets.Add((newSpawnSet, boardGraphCopy));
                     }
                 }
             }
@@ -609,9 +555,16 @@ public class BulletSpawner : Unit
             }
         }
 
-        Debug.Log("Found " + validSpawnSets.Count + " valid spawn sets");
+        Debug.Log(
+            "Found "
+                + validSpawnSets.Count
+                + " valid spawn sets with "
+                + validSpawnSets[0].Set.Count
+                + " bullets"
+        );
         // TODO: Select based on a difficulty heuristic
-        return validSpawnSets[0].Set;
+        int randomIdx = UnityEngine.Random.Range(0, validSpawnSets.Count);
+        return validSpawnSets[randomIdx].Set;
     }
 
     /// <summary>
@@ -620,19 +573,18 @@ public class BulletSpawner : Unit
     /// <param name="spawnSet"></param>
     /// <param name=""></param>
     /// <returns></returns>
-    private List<(List<int> Set, BoardGraph Graph)> AddToSpawnSet(
-        in (List<int> Set, BoardGraph Graph) spawnSet,
+    private List<(List<int> Set, BoardNode[,,] Graph)> AddToSpawnSet(
+        in (List<int> Set, BoardNode[,,] Graph) spawnSet,
         in List<Vector2Int> spawnLocations
     )
     {
-        List<(List<int> Set, BoardGraph Graph)> newSpawnSets =
-            new List<(List<int> Set, BoardGraph Graph)>();
+        var newSpawnSets = new List<(List<int> Set, BoardNode[,,] Graph)>();
         // look forward from the index of the last bullet in the spawn set
         // to avoid duplicates
         for (int j = spawnSet.Set[spawnSet.Set.Count - 1] + 1; j < spawnLocations.Count; j++)
         {
             // Create a deep copy of the board graph for each spawn set
-            BoardGraph boardGraphCopy = spawnSet.Graph.DeepCopy();
+            BoardNode[,,] boardGraphCopy = spawnSet.Graph.Clone() as BoardNode[,,];
             // Check if the spawn location is valid
             if (IsValidSpawn(ref boardGraphCopy, spawnLocations[j]))
             {
@@ -655,7 +607,7 @@ public class BulletSpawner : Unit
     /// <param name="boardGraph"></param>
     /// <param name="posIdx"></param>
     /// <returns>Returns true if the given position is a valid spawn, false otherwise</returns>
-    private bool IsValidSpawn(ref BoardGraph boardGraph, in Vector2Int posIdx)
+    private bool IsValidSpawn(ref BoardNode[,,] boardGraph, in Vector2Int posIdx)
     {
         // determine the direction of the bullet
         Vector2Int direction = new Vector2Int(0, 0);
@@ -669,62 +621,76 @@ public class BulletSpawner : Unit
         else
             direction = new Vector2Int(1, 0); // right
 
-        Queue<BoardNode> queue = new Queue<BoardNode>();
+        // turn, row, col
+        Queue<(int, int, int)> queue = new Queue<(int, int, int)>();
         // Remove connections for nodes that are no longer traversable
         for (int turn = 0; turn < boardGraph.GetLength(0); turn++)
         {
             Vector2Int currentPos = posIdx + direction * turn;
             BoardNode currentNode = boardGraph[turn, currentPos.y, currentPos.x];
             // Remove connections for nodes that the bullet will be on
-            if (currentNode.prev.Count != 0)
+            if (currentNode.prev > 0)
             {
-                queue.Enqueue(currentNode);
-                // remove all connections to the previous turn
-                foreach (Vector2Int prevPos in currentNode.prev)
+                // Remove all connections to the previous turn
+                for (int d = 0; d < 4; d++)
                 {
-                    BoardNode prevNode = boardGraph[turn - 1, prevPos.y, prevPos.x];
-                    prevNode.next.Remove(currentPos);
+                    (int prevRow, int prevCol) = currentNode.GetConnection(false, d);
+                    if (prevRow == -1 || prevCol == -1)
+                        continue;
+                    BoardNode prevNode = boardGraph[turn - 1, prevRow, prevCol];
+                    prevNode.RemoveConnection(true, (d + 2) % 4, currentPos.y, currentPos.x);
+                    boardGraph[turn - 1, prevRow, prevCol] = prevNode;
                 }
-                currentNode.prev.Clear();
+                currentNode.prev = 0;
+                boardGraph[turn, currentPos.y, currentPos.x] = currentNode;
+                queue.Enqueue((turn, currentPos.y, currentPos.x));
             }
 
-            // Check if the bullet will swap with a player
             if (turn == boardGraph.GetLength(0) - 1)
                 continue; // Skip the last turn, we don't need to check it
 
+            // Check if the bullet will swap with a player
             Vector2Int adjPos = posIdx + direction * (turn + 1);
             BoardNode adjNode = boardGraph[turn, adjPos.y, adjPos.x];
             // Check if the adjacent tile on the current turn has connections to the bullets current position
-            foreach (Vector2Int nextPos in adjNode.next)
+            for (int d = 0; d < 4; d++)
             {
-                if (nextPos == currentPos)
+                (int nextRow, int nextCol) = adjNode.GetConnection(true, d);
+                if (nextRow == currentPos.y && nextCol == currentPos.x)
                 {
-                    BoardNode nextNode = boardGraph[turn + 1, nextPos.y, nextPos.x];
-                    nextNode.prev.Remove(adjPos);
-                    adjNode.next.Remove(nextPos);
-                    if (nextNode.prev.Count == 0)
+                    BoardNode nextNode = boardGraph[turn + 1, nextRow, nextCol];
+                    nextNode.RemoveConnection(false, (d + 2) % 4, adjPos.y, adjPos.x);
+                    adjNode.RemoveConnection(true, d, nextRow, nextCol);
+                    boardGraph[turn + 1, nextRow, nextCol] = nextNode;
+                    if (nextNode.prev == 0)
                     {
-                        queue.Enqueue(nextNode); // add to queue if it has no more connections
+                        queue.Enqueue((turn + 1, nextRow, nextCol));
                     }
-                    break;
                 }
             }
+            boardGraph[turn, adjPos.y, adjPos.x] = adjNode;
         }
 
         // Remove all forward connections from the nodes the bullet will be on
         while (queue.Count > 0)
         {
-            BoardNode currentNode = queue.Dequeue();
-            foreach (Vector2Int nextPos in currentNode.next)
+            (int curTurn, int curRow, int curCol) = queue.Dequeue();
+            BoardNode currentNode = boardGraph[curTurn, curRow, curCol];
+            for (int d = 0; d < 4; d++)
             {
-                BoardNode nextNode = boardGraph[currentNode.turn + 1, nextPos.y, nextPos.x];
-                nextNode.prev.Remove(new Vector2Int(currentNode.col, currentNode.row));
-                if (nextNode.prev.Count == 0)
+                (int nextRow, int nextCol) = currentNode.GetConnection(true, d);
+                if (nextRow == -1 || nextCol == -1)
+                    continue;
+                BoardNode nextNode = boardGraph[curTurn + 1, nextRow, nextCol];
+                nextNode.RemoveConnection(false, (d + 2) % 4, curRow, curCol);
+                boardGraph[curTurn + 1, nextRow, nextCol] = nextNode;
+                if (nextNode.prev == 0)
                 {
-                    queue.Enqueue(nextNode); // add to queue if it has no more connections
+                    queue.Enqueue((curTurn + 1, nextRow, nextCol)); // add to queue if it has no more connections
                 }
             }
-            currentNode.next.Clear();
+            currentNode.prev = 0;
+            boardGraph[curTurn, curRow, curCol] = currentNode;
         }
 
         return isBoardSolvable(boardGraph);
