@@ -61,3 +61,6 @@ Thumbs.db
 # Ignore all local history of files
 .history
 .ionide
+
+### VS buffers
+.vs/*
