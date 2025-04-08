@@ -151,8 +151,6 @@ GameObject:
   - component: {fileID: 1497215238787433813}
   - component: {fileID: 1483338785416166006}
   - component: {fileID: 561304918329563864}
-  - component: {fileID: -4601917422455600009}
-  - component: {fileID: 8639693125121616956}
   m_Layer: 0
   m_Name: DashCard
   m_TagString: Untagged
@@ -306,38 +304,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 1.9680898, y: 2.9469366}
   m_EdgeRadius: 0
---- !u!114 &-4601917422455600009
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 572576073498266423}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2fe5546f775c47d2820aa5e8a715f53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data:
-    _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
-    _objectReferences:
-    - {fileID: 11400000, guid: bf065e9a5fff17447baa200e9bf95fec, type: 2}
---- !u!114 &8639693125121616956
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 572576073498266423}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2fe5546f775c47d2820aa5e8a715f53, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _data:
-    _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
-    _objectReferences:
-    - {fileID: 11400000, guid: 3b356103392ed9f40acf0736272841d5, type: 2}
 --- !u!1 &3237326361343753575
 GameObject:
   m_ObjectHideFlags: 0
