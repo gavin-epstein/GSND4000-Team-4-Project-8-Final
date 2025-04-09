@@ -304,12 +304,12 @@ public class BulletSpawner : Unit
             // If the iterative approach is selected, we will use a different algorithm to find the bullet spawns
             // This algorithm will select a single spawn location from a set and continue to build on that
             // instead of trying to find all possible spawn locations at once.
-            Debug.Log("Using iterative approach to find bullet spawns");
+          //  Debug.Log("Using iterative approach to find bullet spawns");
             spawnSet = GetSpawnSetIterative(boardGraph, spawnLocations, numBulletsToSpawn);
         }
         else
         {
-            Debug.Log("Using choose approach to find bullet spawns");
+          //  Debug.Log("Using choose approach to find bullet spawns");
             spawnSet = GetSpawnSetChoose(boardGraph, spawnLocations, numBulletsToSpawn);
         }
 
@@ -555,13 +555,13 @@ public class BulletSpawner : Unit
             }
         }
 
-        Debug.Log(
+      /*  Debug.Log(
             "Found "
                 + validSpawnSets.Count
                 + " valid spawn sets with "
                 + validSpawnSets[0].Set.Count
                 + " bullets"
-        );
+        );*/
         // TODO: Select based on a difficulty heuristic
         int randomIdx = UnityEngine.Random.Range(0, validSpawnSets.Count);
         return validSpawnSets[randomIdx].Set;
