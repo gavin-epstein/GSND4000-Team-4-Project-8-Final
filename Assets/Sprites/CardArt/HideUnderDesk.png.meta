@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      HideUnderDesk_0: -536497204607598976
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

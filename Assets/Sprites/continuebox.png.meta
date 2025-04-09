@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: de7571e8c1f224d4bb7e0ba15fb1bc34
+guid: 0534e929dad6d944aacb7f45ac73e2f1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -1725512561663642363
-    second: MugDrink_0
-  - first:
-      213: -8121546711844972052
-    second: MugDrink_1
+      213: -5575186914159519849
+    second: continuebox_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: MugDrink_0
+      name: continuebox_0
       rect:
         serializedVersion: 2
-        x: 205
-        y: 15
-        width: 202
-        height: 588
+        x: 0
+        y: 0
+        width: 300
+        height: 70
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,30 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5057092a77fbd08e0800000000000000
-      internalID: -1725512561663642363
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: MugDrink_1
-      rect:
-        serializedVersion: 2
-        x: 277
-        y: 596
-        width: 36
-        height: 36
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: ce91dbd9b487a4f80800000000000000
-      internalID: -8121546711844972052
+      spriteID: 7979d194a05f0a2b0800000000000000
+      internalID: -5575186914159519849
       vertices: []
       indices: 
       edges: []
@@ -172,9 +147,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      MugDrink_0: -1725512561663642363
-      MugDrink_1: -8121546711844972052
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
