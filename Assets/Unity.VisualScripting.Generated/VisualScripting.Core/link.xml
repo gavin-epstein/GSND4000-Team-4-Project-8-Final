@@ -1,0 +1,17 @@
+<linker>
+  <assembly fullname="Unity.VisualScripting.Core" preserve="all" />
+  <assembly fullname="Unity.VisualScripting.Flow" preserve="all" />
+  <assembly fullname="Unity.VisualScripting.State" preserve="all" />
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="BulletSpawner" preserve="all" />
+  </assembly>
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="CSVReader" preserve="all" />
+  </assembly>
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="BresenhamAlgorithm" preserve="all" />
+  </assembly>
+  <assembly fullname="Assembly-CSharp">
+    <type fullname="CalculateScoreMultiplier" preserve="all" />
+  </assembly>
+</linker>
