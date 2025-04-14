@@ -2450,29 +2450,13 @@ PrefabInstance:
     - {fileID: 8668978803773545415, guid: dd3fcbd8e9c9753418717fc5cf8333e0, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4785154556253405220, guid: dd3fcbd8e9c9753418717fc5cf8333e0, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1771082630}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: dd3fcbd8e9c9753418717fc5cf8333e0, type: 3}
 --- !u!224 &1771082628 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6895367337117005374, guid: dd3fcbd8e9c9753418717fc5cf8333e0, type: 3}
   m_PrefabInstance: {fileID: 1771082627}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1771082629 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4785154556253405220, guid: dd3fcbd8e9c9753418717fc5cf8333e0, type: 3}
-  m_PrefabInstance: {fileID: 1771082627}
-  m_PrefabAsset: {fileID: 0}
---- !u!222 &1771082630
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1771082629}
-  m_CullTransparentMesh: 1
 --- !u!1 &1857415643
 GameObject:
   m_ObjectHideFlags: 0
