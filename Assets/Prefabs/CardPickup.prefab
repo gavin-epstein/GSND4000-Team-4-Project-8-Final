@@ -101,6 +101,7 @@ GameObject:
   - component: {fileID: 1611211956767685926}
   - component: {fileID: 1930953113675409898}
   - component: {fileID: 2720269605596400024}
+  - component: {fileID: 1604231611480870339}
   m_Layer: 0
   m_Name: CardPickup
   m_TagString: Untagged
@@ -206,6 +207,18 @@ MonoBehaviour:
     _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
     _objectReferences:
     - {fileID: 11400000, guid: bf065e9a5fff17447baa200e9bf95fec, type: 2}
+--- !u!114 &1604231611480870339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2166457968494096058}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f5f006d84a1dd04d9b7788d586fb9d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4960792942803298306
 GameObject:
   m_ObjectHideFlags: 0
