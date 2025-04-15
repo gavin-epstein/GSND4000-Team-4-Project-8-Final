@@ -14,9 +14,6 @@ public class CalculateScoreMultiplier : Unit
 
     [DoNotSerialize]
     public ValueInput timeSinceLastTurn;
-    
-    [DoNotSerialize]
-    public ValueInput scoreScalingFactor;
 
     [DoNotSerialize]
     public ValueInput turnsChained;
@@ -30,13 +27,12 @@ public class CalculateScoreMultiplier : Unit
     {
         inputTrigger = ControlInput("inputTrigger", (flow) => 
         {
-            scoreMultiplierValue = flow.GetValue<float>(scoreScalingFactor)*(float)flow.GetValue<int>(turnsChained)*Mathf.Log(flow.GetValue<float>(currentTimeLimit)-flow.GetValue<float>(timeSinceLastTurn)+1)+1;
+            scoreMultiplierValue = (float)flow.GetValue<int>(turnsChained)*Mathf.Log(flow.GetValue<float>(currentTimeLimit)-flow.GetValue<float>(timeSinceLastTurn)+1)+1;
             return outputTrigger; 
         });
         outputTrigger = ControlOutput("outputTrigger");
         currentTimeLimit = ValueInput<float>("currentTimeLimit", 0);
         timeSinceLastTurn = ValueInput<float>("timeSinceLastTurn", 0);
-        scoreScalingFactor = ValueInput<float>("scoreScalingFactor", 0);
         turnsChained = ValueInput<int>("turnsChained", 0);
         scoreMultiplier = ValueOutput<float>("scoreMultiplier", (flow) => scoreMultiplierValue);
     }
